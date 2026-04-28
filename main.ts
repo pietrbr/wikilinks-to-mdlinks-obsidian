@@ -10,17 +10,110 @@ export default class WikilinksToMdlinks extends Plugin {
       editorCallback: (editor: Editor) => {
         this.toggleLink(editor);
       },
-      hotkeys: [
-        {
-          modifiers: ["Mod", "Shift"],
-          key: "L",
-        },
-      ],
+      hotkeys: [{ modifiers: ["Mod", "Shift"], key: "L" }],
+    });
+
+    this.addCommand({
+      id: "convert-all-to-md-links",
+      name: "Convert all wikilinks in file to markdown links",
+      editorCallback: (editor: Editor) => {
+        this.convertAll(editor, "toMd");
+      },
+    });
+
+    this.addCommand({
+      id: "convert-all-to-wiki-links",
+      name: "Convert all markdown links in file to wikilinks",
+      editorCallback: (editor: Editor) => {
+        this.convertAll(editor, "toWiki");
+      },
     });
   }
 
   onunload() {
     console.log("unloading wikilinks-to-mdlinks plugin");
+  }
+
+  convertAll(editor: Editor, direction: "toMd" | "toWiki") {
+    const regexHasExtension = /^([^\\]*)\.(\w+)$/;
+    let inFrontmatter = false;
+    let codeDepth = 0;
+    let count = 0;
+
+    const lineCount = editor.lineCount();
+    for (let lineNum = 0; lineNum < lineCount; lineNum++) {
+      const line = editor.getLine(lineNum);
+
+      // Track YAML frontmatter
+      if (lineNum === 0 && line === "---") {
+        inFrontmatter = true;
+        continue;
+      }
+      if (inFrontmatter) {
+        if (line === "---") inFrontmatter = false;
+        continue;
+      }
+
+      // Track fenced code blocks
+      if (/^(?:```|~~~)/.test(line)) {
+        codeDepth ^= 1;
+        continue;
+      }
+      if (codeDepth > 0) continue;
+
+      let newLine: string;
+
+      if (direction === "toMd") {
+        newLine = line.replace(
+          /\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/g,
+          (_, target, alias) => {
+            const anchorIdx = target.indexOf("#");
+            const base = anchorIdx >= 0 ? target.slice(0, anchorIdx) : target;
+            const anchor = anchorIdx >= 0 ? target.slice(anchorIdx) : "";
+            const hasExt = regexHasExtension.test(base);
+            const urlPath = (hasExt ? base : base + ".md") + anchor;
+            const displayText = alias !== undefined ? alias : target;
+            count++;
+            return `[${displayText}](${encodeURI(urlPath)})`;
+          },
+        );
+      } else {
+        newLine = line.replace(
+          /\[([^\]]*)\]\(([^\)]*)\)/g,
+          (match, displayText, urlRaw) => {
+            const wikiTarget = decodeURI(urlRaw);
+            if (/^[a-z][a-z\d+\-.]*:\/\//i.test(wikiTarget)) return match;
+
+            const anchorIdx = wikiTarget.indexOf("#");
+            const anchor = anchorIdx >= 0 ? wikiTarget.slice(anchorIdx) : "";
+            const baseUrl =
+              anchorIdx >= 0 ? wikiTarget.slice(0, anchorIdx) : wikiTarget;
+            const extMatch = baseUrl.match(regexHasExtension);
+            const wikiBase =
+              extMatch && extMatch[2] === "md" ? extMatch[1] : baseUrl;
+            const target = wikiBase + anchor;
+            count++;
+            return displayText !== target
+              ? `[[${target}|${displayText}]]`
+              : `[[${target}]]`;
+          },
+        );
+      }
+
+      if (newLine !== line) {
+        editor.replaceRange(
+          newLine,
+          { line: lineNum, ch: 0 },
+          { line: lineNum, ch: line.length },
+        );
+      }
+    }
+
+    new Notice(
+      count > 0
+        ? `Converted ${count} link${count > 1 ? "s" : ""}`
+        : "No links found",
+    );
   }
 
   toggleLink(editor: Editor) {
@@ -45,8 +138,6 @@ export default class WikilinksToMdlinks extends Plugin {
     if (codeDepth === 1 || /^(?:```|~~~)/.test(line)) return;
 
     const regexHasExtension = /^([^\\]*)\.(\w+)$/;
-
-    // Captures target and optional alias: [[target]] or [[target|alias]]
     const regexWiki = /\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/;
     const regexWikiGlobal = /\[\[([^\]]*)\]\]/g;
     const regexMdGlobal = /\[([^\]]*)\]\(([^\)]*)\)/g;
@@ -56,7 +147,6 @@ export default class WikilinksToMdlinks extends Plugin {
 
     let ifFoundMatch = false;
 
-    // If there are wikiMatches find if the cursor is inside the selected text
     let i = 0;
     if (wikiMatches) {
       for (const item of wikiMatches) {
@@ -71,17 +161,12 @@ export default class WikilinksToMdlinks extends Plugin {
           const target = wikiMatch[1];
           const alias = wikiMatch[2];
 
-          // Separate heading anchor from filename before processing
           const anchorIdx = target.indexOf("#");
           const base = anchorIdx >= 0 ? target.slice(0, anchorIdx) : target;
           const anchor = anchorIdx >= 0 ? target.slice(anchorIdx) : "";
-
-          // Build URL: add .md to base only if it has no extension
           const hasExt = base.match(regexHasExtension);
           const urlPath = (hasExt ? base : base + ".md") + anchor;
           const encodedPath = encodeURI(urlPath);
-
-          // Display text: alias if present, otherwise the full target (with anchor)
           const displayText = alias !== undefined ? alias : target;
 
           editor.replaceRange(
@@ -108,25 +193,20 @@ export default class WikilinksToMdlinks extends Plugin {
             const displayText = mdMatch[1];
             let wikiTarget = decodeURI(mdMatch[2]);
 
-            // Skip external URLs (http://, https://, ftp://, etc.)
             if (/^[a-z][a-z\d+\-.]*:\/\//i.test(wikiTarget)) {
               new Notice("External URLs cannot be converted to wikilinks");
               return;
             }
 
-            // Separate heading anchor before stripping extension
             const anchorIdx = wikiTarget.indexOf("#");
             const anchor = anchorIdx >= 0 ? wikiTarget.slice(anchorIdx) : "";
             const baseUrl =
               anchorIdx >= 0 ? wikiTarget.slice(0, anchorIdx) : wikiTarget;
-
-            // Strip .md from base filename only
             const extMatch = baseUrl.match(regexHasExtension);
             const wikiBase =
               extMatch && extMatch[2] === "md" ? extMatch[1] : baseUrl;
             wikiTarget = wikiBase + anchor;
 
-            // Use alias syntax only when display text differs from target
             const newItem =
               displayText !== wikiTarget
                 ? `[[${wikiTarget}|${displayText}]]`
