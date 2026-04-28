@@ -65,7 +65,7 @@ export default class WikilinksToMdlinks extends Plugin {
 
       if (direction === "toMd") {
         newLine = line.replace(
-          /\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/g,
+          /(?<!!)\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/g,
           (_, target, alias) => {
             const anchorIdx = target.indexOf("#");
             const base = anchorIdx >= 0 ? target.slice(0, anchorIdx) : target;
@@ -79,7 +79,7 @@ export default class WikilinksToMdlinks extends Plugin {
         );
       } else {
         newLine = line.replace(
-          /\[([^\]]*)\]\(([^\)]*)\)/g,
+          /(?<!!)\[([^\]]*)\]\(([^\)]*)\)/g,
           (match, displayText, urlRaw) => {
             const wikiTarget = decodeURI(urlRaw);
             if (/^[a-z][a-z\d+\-.]*:\/\//i.test(wikiTarget)) return match;
@@ -139,8 +139,8 @@ export default class WikilinksToMdlinks extends Plugin {
 
     const regexHasExtension = /^([^\\]*)\.(\w+)$/;
     const regexWiki = /\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/;
-    const regexWikiGlobal = /\[\[([^\]]*)\]\]/g;
-    const regexMdGlobal = /\[([^\]]*)\]\(([^\)]*)\)/g;
+    const regexWikiGlobal = /(?<!!)\[\[([^\]]*)\]\]/g;
+    const regexMdGlobal = /(?<!!)\[([^\]]*)\]\(([^\)]*)\)/g;
 
     const wikiMatches = line.match(regexWikiGlobal);
     const mdMatches = line.match(regexMdGlobal);
