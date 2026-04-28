@@ -1,54 +1,80 @@
-# Wikilinks to MDLinks (an Obsidian.md plugin)
-[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/agathauy/wikilinks-to-mdlinks-obsidian)](https://github.com/agathauy/wikilinks-to-mdlinks-obsidian/releases/latest)
-[![GitHub All Releases](https://img.shields.io/github/downloads/agathauy/wikilinks-to-mdlinks-obsidian/total)](https://github.com/agathauy/wikilinks-to-mdlinks-obsidian/releases)
+# obsidian-link-converter
 
-This plugin allows for the conversion of individually selected wikilinks to markdown links, and vice versa.
+An Obsidian plugin to convert between wikilinks and markdown links. Based on [wikilinks-to-mdlinks-obsidian](https://github.com/agathauy/wikilinks-to-mdlinks-obsidian) by agathauy, extended with additional commands.
 
-![demo](https://raw.githubusercontent.com/agathauy/wikilinks-to-mdlinks-obsidian/master/demo2.gif)
+## Features
 
-### How-to
+- **Toggle single link** — place your cursor inside any link and toggle it between wikilink and markdown format
+- **Convert all links in file** — bulk-convert every wikilink to markdown, or every markdown link to wikilink
+- Skips YAML frontmatter and fenced code blocks
+- Preserves aliases and anchors (`#heading`)
+- External URLs are not converted to wikilinks (shows a notice instead)
+- Images are excluded from conversion
 
-1. Click your cursor somewhere within the link you want to convert. 
-2. Either use the hotkey `Ctrl/cmd + shift + L`, or press `Ctrl/cmd + p` to open the settings dialog and search for `Wikilinks to MDLinks: Toggle selected wikilink to markdown link and vice versa`. Just typing in a bit of the command, e.g. "toggle" would likely allow this command to show up via the suggestions the search dialog provides.
-3. The selected link gets toggled to either wikilink format or markdown format, depending on what it was before.
+## Commands
 
-### Settings
+| Command                                                  | Default hotkey         |
+| -------------------------------------------------------- | ---------------------- |
+| Toggle selected wikilink to markdown link and vice versa | `Ctrl/Cmd + Shift + L` |
+| Convert all wikilinks in file to markdown links          | —                      |
+| Convert all markdown links in file to wikilinks          | —                      |
 
--  Toggle selected wikilink to markdown link and vice versa
+## How to use
 
-### Future Plans
-1. Convert all wikilinks in selected text to markdown
-2. Convert all markdown links in selected text to wikilinks
+1. Place the cursor inside the link you want to convert.
+2. Run the toggle command via hotkey `Ctrl/Cmd + Shift + L`, or open the command palette (`Ctrl/Cmd + P`) and search for "Toggle selected wikilink".
+3. To convert the whole file at once, use the command palette and search for "Convert all".
 
 ## Installation
+
 ### From within Obsidian
-1. Install via the `Third Party plugins` setting. Search for `Wikilinks to MDLinks`.
-2. Activate the plugin in the settings.
 
-### How to run this repo
+1. Go to **Settings → Community plugins** and search for `obsidian-link-converter`.
+2. Install and enable the plugin.
 
-- Clone this repo.
-- `npm i` or `yarn` to install dependencies
-- `npm run dev` to start compilation in watch mode.
+### Manual
 
-### Obsidian API Documentation
-Based on the following links:
+1. Clone this repo into your vault's `.obsidian/plugins/` directory.
+2. Run `npm install` and `npm run build`.
+3. Enable the plugin in Obsidian settings.
 
-https://github.com/obsidianmd/obsidian-sample-plugin
-https://github.com/obsidianmd/obsidian-api
+## Development
 
-# Version History
-## 0.0.5
+```sh
+npm install
+npm run dev   # watch mode
+```
+
+## Credits
+
+Based on [wikilinks-to-mdlinks-obsidian](https://github.com/agathauy/wikilinks-to-mdlinks-obsidian) by [@agathauy](https://github.com/agathauy).
+
+## Version History
+
+### 0.1.0
+
+- Bulk-convert all wikilinks in a file to markdown links
+- Bulk-convert all markdown links in a file to wikilinks
+- Skip YAML frontmatter and fenced code blocks during conversion
+- Notify when trying to convert an external link to wikilink
+- Exclude images from conversion
+
+### 0.0.5
+
 - Updated for callback check
 
-## 0.0.4
+### 0.0.4
+
 - Updated markdown link regex
 
-## 0.0.3
+### 0.0.3
+
 - Updated certain functions as per Obsidian pull request recommendations
 
-## 0.0.2
-- Changed shortcut to `Ctrl/cmd + shift + =` due to conflict with previous.
+### 0.0.2
 
-## 0.0.1
-- Initial release. Includes `Toggle selected wikilink to markdown link and vice versa`.
+- Changed shortcut to `Ctrl/cmd + Shift + =` due to conflict with previous
+
+### 0.0.1
+
+- Initial release: toggle selected wikilink to markdown link and vice versa
