@@ -1,13 +1,4 @@
-import { strict } from "assert";
-import {
-  App,
-  Modal,
-  Notice,
-  Plugin,
-  PluginSettingTab,
-  Setting,
-} from "obsidian";
-import { MarkdownView, TFile } from "obsidian";
+import { Editor, Notice, Plugin } from "obsidian";
 
 export default class WikilinksToMdlinks extends Plugin {
   onload() {
@@ -16,19 +7,8 @@ export default class WikilinksToMdlinks extends Plugin {
     this.addCommand({
       id: "toggle-wiki-md-links",
       name: "Toggle selected wikilink to markdown link and vice versa",
-      checkCallback: (checking: boolean) => {
-        const currentView =
-          this.app.workspace.getActiveViewOfType(MarkdownView);
-
-        if (currentView == null || currentView.getMode() !== "source") {
-          return false;
-        }
-
-        if (!checking) {
-          this.toggleLink();
-        }
-
-        return true;
+      editorCallback: (editor: Editor) => {
+        this.toggleLink(editor);
       },
       hotkeys: [
         {
@@ -43,10 +23,7 @@ export default class WikilinksToMdlinks extends Plugin {
     console.log("unloading wikilinks-to-mdlinks plugin");
   }
 
-  toggleLink() {
-    const currentView = this.app.workspace.getActiveViewOfType(MarkdownView);
-    const editor = currentView.editor;
-
+  toggleLink(editor: Editor) {
     const cursor = editor.getCursor();
     const line = editor.getLine(cursor.line);
 
@@ -74,8 +51,8 @@ export default class WikilinksToMdlinks extends Plugin {
     const regexWikiGlobal = /\[\[([^\]]*)\]\]/g;
     const regexMdGlobal = /\[([^\]]*)\]\(([^\)]*)\)/g;
 
-    let wikiMatches = line.match(regexWikiGlobal);
-    let mdMatches = line.match(regexMdGlobal);
+    const wikiMatches = line.match(regexWikiGlobal);
+    const mdMatches = line.match(regexMdGlobal);
 
     let ifFoundMatch = false;
 
@@ -83,9 +60,9 @@ export default class WikilinksToMdlinks extends Plugin {
     let i = 0;
     if (wikiMatches) {
       for (const item of wikiMatches) {
-        let temp = line.slice(i, line.length);
-        let index = i + temp.indexOf(item);
-        let indexEnd = index + item.length;
+        const temp = line.slice(i, line.length);
+        const index = i + temp.indexOf(item);
+        const indexEnd = index + item.length;
         i = indexEnd;
 
         if (cursor.ch >= index && cursor.ch <= indexEnd) {
@@ -120,9 +97,9 @@ export default class WikilinksToMdlinks extends Plugin {
     if (!ifFoundMatch) {
       if (mdMatches) {
         for (const item of mdMatches) {
-          let temp = line.slice(i, line.length);
-          let index = i + temp.indexOf(item);
-          let indexEnd = index + item.length;
+          const temp = line.slice(i, line.length);
+          const index = i + temp.indexOf(item);
+          const indexEnd = index + item.length;
           i = indexEnd;
 
           if (cursor.ch >= index && cursor.ch <= indexEnd) {
@@ -132,7 +109,10 @@ export default class WikilinksToMdlinks extends Plugin {
             let wikiTarget = decodeURI(mdMatch[2]);
 
             // Skip external URLs (http://, https://, ftp://, etc.)
-            if (/^[a-z][a-z\d+\-.]*:\/\//i.test(wikiTarget)) return;
+            if (/^[a-z][a-z\d+\-.]*:\/\//i.test(wikiTarget)) {
+              new Notice("External URLs cannot be converted to wikilinks");
+              return;
+            }
 
             // Separate heading anchor before stripping extension
             const anchorIdx = wikiTarget.indexOf("#");
@@ -160,6 +140,10 @@ export default class WikilinksToMdlinks extends Plugin {
           }
         }
       }
+    }
+
+    if (!ifFoundMatch) {
+      new Notice("No link found at cursor");
     }
   }
 }
