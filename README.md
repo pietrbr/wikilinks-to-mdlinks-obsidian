@@ -9,7 +9,6 @@ An Obsidian plugin to convert between wikilinks and markdown links. Based on [wi
 - Skips YAML frontmatter and fenced code blocks
 - Preserves aliases and anchors (`#heading`)
 - External URLs are not converted to wikilinks (shows a notice instead)
-- Images are excluded from conversion
 
 ## Commands
 
@@ -51,13 +50,16 @@ Based on [wikilinks-to-mdlinks-obsidian](https://github.com/agathauy/wikilinks-t
 
 ## Version History
 
+### 0.1.1
+
+- Convert images in both directions (`![[image.png]]` ↔ `![image.png](image.png)`)
+
 ### 0.1.0
 
 - Bulk-convert all wikilinks in a file to markdown links
 - Bulk-convert all markdown links in a file to wikilinks
 - Skip YAML frontmatter and fenced code blocks during conversion
 - Notify when trying to convert an external link to wikilink
-- Exclude images from conversion
 
 ### 0.0.5
 

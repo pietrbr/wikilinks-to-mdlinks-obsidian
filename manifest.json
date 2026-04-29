@@ -1,7 +1,7 @@
 {
   "id": "wikilinks-to-mdlinks-extended",
   "name": "Wikilinks to MDLinks (Extended)",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "minAppVersion": "1.0.0",
   "description": "A plugin that converts wikilinks to markdown links and vice versa",
   "author": "Pietro Brach del Prever",
